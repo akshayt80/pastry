@@ -13,15 +13,18 @@ We have implemented the Pastry protocol as described in the paper as given in th
 
 # Largest network managed
 
+We tested for different combinations of number of nodes and number of requests. Below are some of the readings for the same:
+
 |Nodes |Requests	|Avg Hops|
-|------|--------- |------- |
+|------|--------- |-------|
 |10	   |10        |1.06 	 |
-|100	 |10  	    |2.253	 |
-|100	 |100 	    |2.2846  |
-|500	 |10  	    |3.0872  |
-|500   |100       |3.11706 |
+|100	 |10  	    |2.253	   |
+|100	 |100 	    |2.2846   |
+|500	 |10  	    |3.0872   |
+|500   |100       |3.11706|
 |1000	 |10  	    |3.5148	 |
-|1000  |100       |3.53418 |
+|1000  |100       |3.53418|
+|2000  |10       |3.86925 |
 
  ## Installation
 
