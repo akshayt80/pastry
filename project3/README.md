@@ -9,10 +9,21 @@ Team 3
 2. Akshay Singh Jetawat, UFID:22163183, akshayt80@ufl.edu,
 
 # What is working 
+We have implemented the Pastry protocol as described in the paper as given in the project specifications. The route and the join mechanisms are also working.
 
 # Largest network managed
 
-## Installation
+|Nodes |Requests	|Avg Hops|
+|------|--------- |------- |
+|10	   |10        |1.06 	 |
+|100	 |10  	    |2.253	 |
+|100	 |100 	    |2.2846  |
+|500	 |10  	    |3.0872  |
+|500   |100       |3.11706 |
+|1000	 |10  	    |3.5148	 |
+|1000  |100       |3.53418 |
+
+ ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 by adding `project3` to your list of dependencies in `mix.exs`:
