@@ -250,7 +250,7 @@ defmodule PastryNode do
                         end
                     end
                 end
-            {:addRow, {rowNum, newRow}} -> 
+            {:addRow, {rowNum, newRow}} ->
                 # for i <- 0..3 do
                 #     table_row = Enum.at(table, rowNum)
                 #     element_at_index = Enum.at(table_row, i)
@@ -259,7 +259,7 @@ defmodule PastryNode do
                 #         updated_row = List.replace_at(table_row, i, new_element)
                 #         table = List.replace_at(table, i, updated_row)
                 #     end
-                # end 
+                # end
                 table = List.replace_at(table, rowNum, newRow)
             {:addLeaf, allLeaf} -> {larger_leafs, smaller_leafs, table} = add_buffer(allLeaf, larger_leafs, smaller_leafs, table, id, base)
                 update_sent = for i <- smaller_leafs do
