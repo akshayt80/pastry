@@ -64,11 +64,11 @@ defmodule Master do
                 end
             {:startRouting, value} -> Logger.info "Join is finished"
                 Logger.info "Now starting with routing"
-                for i <- registry do
+                for i <- numFailures..numNodes-1 do
                     # right now this is async sending
                     #spawn fn -> send :"#{i}", {:startRouting, "Start Routing"} end
                     Logger.debug "sending start route to : #{i}"
-                    send :"#{i}", {:startRouting, "Start Routing"}
+                    send :"#{Enum.at(registry, i)}", {:startRouting, "Start Routing"}
                 end
             {:notInBoth, value} -> numNotInBoth = numNotInBoth + 1
             {:routeFinish, {from, to, hops}} -> numRouted = numRouted + 1
@@ -86,7 +86,7 @@ defmodule Master do
                 if numFailures > 0 do
                     for i <- 0..numFailures-1 do
                         node = Enum.at(registry, i)
-                        Logger.debug "Sending kill to: Node_#{node}"
+                        Logger.debug "Sending kill to: #{node}"
                         send :"#{node}", {:terminate, registry}
                     end 
                 end
