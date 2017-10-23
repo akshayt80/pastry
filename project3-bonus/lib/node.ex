@@ -104,6 +104,7 @@ defmodule PastryNode do
         {larger_leafs, smaller_leafs}
     end
     defp update_leafs(newNodes, id, larger_leafs, smaller_leafs, current, size) when current >= size do
+        Logger.debug "updated_leaf: large: #{inspect(larger_leafs)} small: #{inspect(smaller_leafs)}"
         {larger_leafs, smaller_leafs}
     end
     defp update_leafs(newNodes, id, larger_leafs, smaller_leafs, current \\ -1, size \\ 0) do
@@ -235,33 +236,41 @@ defmodule PastryNode do
                     # TODO:- make it async
                     send :"#{i}", {:removeNode, id}
                 end
-                Process.sleep(123_456)
+                Process.sleep(1000)
             {:removeNode, nodeId} -> 
-                if nodeId > id and Enum.member?(larger_leafs, nodeId) do
-                    larger_leafs = larger_leafs -- [nodeId]
-                    if length(larger_leafs) > 0 do
-                        send :"Node_#{Enum.max(larger_leafs)}", {:getLeafExcept, self(), nodeId}
+                if nodeId != id do
+                    if nodeId > id and Enum.member?(larger_leafs, nodeId) do
+                        larger_leafs = larger_leafs -- [nodeId]
+                        if length(larger_leafs) > 0 do
+                            send :"Node_#{Enum.max(larger_leafs)}", {:getLeafExcept, self(), nodeId}
+                        else
+                            larger_leafs = []
+                        end
                     end
-                end
-                if nodeId < id and Enum.member?(smaller_leafs, nodeId) do
-                    smaller_leafs = smaller_leafs -- [nodeId]
-                    if length(smaller_leafs) > 0 do
-                        send :"Node_#{Enum.min(smaller_leafs)}", {:getLeafExcept, self(), nodeId}
+                    if nodeId < id and Enum.member?(smaller_leafs, nodeId) do
+                        smaller_leafs = smaller_leafs -- [nodeId]
+                        if length(smaller_leafs) > 0 do
+                            send :"Node_#{Enum.min(smaller_leafs)}", {:getLeafExcept, self(), nodeId}
+                        else
+                            smaller_leafs = []
+                        end
                     end
-                end
-                samePrefix = different_bit(toBase4String(id, base), toBase4String(nodeId, base), base)
-                table_row = Enum.at(table, samePrefix)
-                index = toBase4String(nodeId, base) |> String.at(samePrefix) |> Integer.parse |> elem(0)
-                #element_at_index = elem(Integer.pasre(String.at(toBase4String(i, base), samePrefix)), 0)
-                element_in_row = Enum.at(table_row, index)
-                if element_in_row == nodeId do 
-                    updated_row = List.replace_at(table_row, index, -1)
-                    table = List.replace_at(table, samePrefix, updated_row)
-                    for i <- 0..3 do
-                        table_row = Enum.at(table, samePrefix)
-                        element = Enum.at(table_row, i)
-                        if element != nodeId and element != id and element != -1 do
-                            send :"Node_#{element}", {:getTableElement, self(), samePrefix, index}
+                    samePrefix = different_bit(toBase4String(id, base), toBase4String(nodeId, base), base)
+                    table_row = Enum.at(table, samePrefix)
+                    integer = toBase4String(nodeId, base) |> String.at(samePrefix)
+                    Logger.debug "number to be parsed: #{integer}"
+                    index = toBase4String(nodeId, base) |> String.at(samePrefix) |> Integer.parse |> elem(0)
+                    #element_at_index = elem(Integer.pasre(String.at(toBase4String(i, base), samePrefix)), 0)
+                    element_in_row = Enum.at(table_row, index)
+                    if element_in_row == nodeId do
+                        updated_row = List.replace_at(table_row, index, -1)
+                        table = List.replace_at(table, samePrefix, updated_row)
+                        for i <- 0..3 do
+                            table_row = Enum.at(table, samePrefix)
+                            element = Enum.at(table_row, i)
+                            if element != nodeId and element != id and element != -1 do
+                                send :"Node_#{element}", {:getTableElement, self(), samePrefix, index}
+                            end
                         end
                     end
                 end
@@ -290,6 +299,7 @@ defmodule PastryNode do
     end
     defp get_nearest(to, leafs, nearest, diff) do
         [current | remaining_leafs] = leafs
+        Logger.debug "nearest: #{current} remaining_leafs: #{inspect(remaining_leafs)}, to: #{to}"
         if abs(to - current) < diff do
             nearest = current
             diff = abs(to - current)
@@ -299,10 +309,11 @@ defmodule PastryNode do
     defp start_async_requests(numRequests, nodeIdSpace, id) do
         for i <- 0..numRequests-1 do
             # sending request every second to self
-            :timer.sleep 1000
+            #:timer.sleep 1000
             to = :rand.uniform(nodeIdSpace - 1 )
             Logger.debug "Node_#{id} sending request: from: #{id} to: #{to}"
-            send :"Node_#{id}", {:route, {id, to, -1}}
+            #send :"Node_#{id}", {:route, {id, to, -1}}
+            Process.send_after(:"Node_#{id}", {:route, {id, to, -1}}, 1000)
         end
     end
 end
