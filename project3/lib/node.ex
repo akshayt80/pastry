@@ -120,146 +120,54 @@ defmodule PastryNode do
                     List.replace_at(table_row, index, id)
                 end
                 Logger.debug "Node_#{id} larger_leafs: #{inspect(larger_leafs)} smaller_leafs: #{inspect(smaller_leafs)} table: #{inspect(table)}"
-                # send message to master
-                # TODO:- check if the message has to be sent to actor from whose this message was received
-                #send :master, {:finishedJoining, "finished joining"}
                 send from, {:finishedJoining, "finished joining"}
-            {:route, {type, from, to, hops}} -> # TODO:- Finish the implementation
-                Logger.debug "Node_#{id} type: #{type} from: #{from} to: #{to} hops: #{hops}"
-                if type == :join do
+            {:route, {from, to, hops}} -> # TODO:- Finish the implementation
+                Logger.debug "Node_#{id} from: #{from} to: #{to} hops: #{hops}"
+                if id == to do
+                    send :master, {:routeFinish, {from, to, hops + 1}}
+                else
                     samePrefix = different_bit(toBase4String(id, base), toBase4String(to, base), base)
                     table_row = Enum.at(table, samePrefix)
-                    Logger.debug "Node_#{id} type: #{type} sameprefix: #{samePrefix} table row: #{inspect(table_row)}"
+                    Logger.debug "Node_#{id} sameprefix: #{samePrefix} table row: #{inspect(table_row)}"
                     index = toBase4String(to, base) |> String.at(samePrefix) |> Integer.parse |> elem(0)
-                    if hops == -1 and samePrefix > 0 do
-                        for i <- 0..samePrefix-1 do
-                            send :"Node_#{to}", {:addRow, {i, Enum.at(table, i)}}
-                        end
-                    end
-                    Logger.debug "Node_#{id} send addrow to sameprefix: #{samePrefix}"
-                    send :"Node_#{samePrefix}", {:addRow, {samePrefix, Enum.at(table, samePrefix)}}
-
                     cond do
-                       (length(smaller_leafs) > 0 and to >= Enum.min(smaller_leafs) and to <= id) or (length(larger_leafs) > 0 and to <= Enum.max(larger_leafs) and to >= id) ->
+                       (length(smaller_leafs) > 0 and to >= Enum.min(smaller_leafs) and to < id) or (length(larger_leafs) > 0 and to <= Enum.max(larger_leafs) and to > id) ->
                             diff = nodeIdSpace + 10
                             nearest = -1
                             # in smaller leafs
                             if to < id do
-                                # for i <- smaller_leafs do
-                                #     if abs(to - i) < diff do
-                                #         nearest = i
-                                #         diff = abs(to - i)
-                                #     end
-                                # end
                                 {nearest, diff} = get_nearest(to, smaller_leafs, nearest, diff)
                             # in larger leafs
                             else
-                                # for i <- larger_leafs do
-                                #     if abs(to - i) < diff do
-                                #         nearest = i
-                                #         diff = abs(to - i)
-                                #     end
-                                # end
                                 {nearest, diff} = get_nearest(to, larger_leafs, nearest, diff)
                             end
 
                             if abs(to - id) > diff do
-                                send :"Node_#{nearest}", {:route, {type, from, to, hops + 1}}
+                                send :"Node_#{nearest}", {:route, {from, to, hops + 1}}
                             else
-                                # send leaf set info
-                                allLeaf = [id] ++ smaller_leafs ++ larger_leafs
-                                send :"Node_#{to}", {:addLeaf, allLeaf}
-                            end
-                        length(smaller_leafs) < 4 and length(smaller_leafs) > 0 and to < Enum.min(smaller_leafs) ->
-                            send :"Node_#{Enum.min(smaller_leafs)}", {:route, {type, from, to, hops + 1}}
-                        length(larger_leafs) < 4 and length(larger_leafs) > 0 and to > Enum.max(larger_leafs) ->
-                            send :"Node_#{Enum.max(larger_leafs)}", {:route, {type, from, to, hops + 1}}
-                        (length(smaller_leafs) == 0 and to < id) or (length(larger_leafs) == 0 and to > id) ->
-                            allLeaf = [id] ++ smaller_leafs ++ larger_leafs
-                            send :"Node_#{to}", {:addLeaf, allLeaf}
-                        Enum.at(table_row, index) != -1 ->
-                            send :"Node_#{Enum.at(table_row, index)}", {:route, {type, from, to, hops + 1}}
-                        to > id ->
-                            send :"Node_#{Enum.max(larger_leafs)}", {:route, {type, from, to, hops + 1}}
-                            send :master, {:notInBoth, "not in both"}
-                        to < id ->
-                            send :"Node_#{Enum.min(smaller_leafs)}", {:route, {type, from, to, hops + 1}}
-                            send :master, {:notInBoth, "not in both"}
-                        true -> Logger.info "Node_#{id} Impossible!!! type: #{type} from: #{from} to: #{to}"
-                    end
-                else
-                    if type == :route do
-                        Logger.debug "Node_#{id} in :route to: #{to}"
-                        if id == to do
-                            send :master, {:routeFinish, {from, to, hops + 1}}
-                        else
-                            samePrefix = different_bit(toBase4String(id, base), toBase4String(to, base), base)
-                            table_row = Enum.at(table, samePrefix)
-                            Logger.debug "Node_#{id} type: #{type} sameprefix: #{samePrefix} table row: #{inspect(table_row)}"
-                            index = toBase4String(to, base) |> String.at(samePrefix) |> Integer.parse |> elem(0)
-                            cond do
-                               (length(smaller_leafs) > 0 and to >= Enum.min(smaller_leafs) and to < id) or (length(larger_leafs) > 0 and to <= Enum.max(larger_leafs) and to > id) ->
-                                    diff = nodeIdSpace + 10
-                                    nearest = -1
-                                    # in smaller leafs
-                                    if to < id do
-                                        # for i <- smaller_leafs do
-                                        #     if abs(to - i) < diff do
-                                        #         nearest = i
-                                        #         diff = abs(to - i)
-                                        #     end
-                                        # end
-                                        {nearest, diff} = get_nearest(to, smaller_leafs, nearest, diff)
-                                    # in larger leafs
-                                    else
-                                        # for i <- larger_leafs do
-                                        #     if abs(to - i) < diff do
-                                        #         nearest = i
-                                        #         diff = abs(to - i)
-                                        #     end
-                                        # end
-                                        {nearest, diff} = get_nearest(to, larger_leafs, nearest, diff)
-                                    end
-
-                                    if abs(to - id) > diff do
-                                        send :"Node_#{nearest}", {:route, {type, from, to, hops + 1}}
-                                    else
-                                        #allLeaf = [id] ++ smaller_leafs ++ larger_leafs
-                                        #send :"Node_#{to}", {:addLeaf, allLeaf}
-                                        Logger.debug "Node_#{id}, route finished"
-                                        send :master, {:routeFinish, {from, to, hops + 1}}
-                                    end
-                            length(smaller_leafs) < 4 and length(smaller_leafs) > 0 and to < Enum.min(smaller_leafs) ->
-                                send :"Node_#{Enum.min(smaller_leafs)}", {:route, {type, from, to, hops + 1}}
-                            length(larger_leafs) < 4 and length(larger_leafs) > 0 and to > Enum.max(larger_leafs) ->
-                                send :"Node_#{Enum.max(larger_leafs)}", {:route, {type, from, to, hops + 1}}
-                            (length(smaller_leafs) == 0 and to < id) or (length(larger_leafs) == 0 and to > id) ->
-                                # current node is closest
+                                Logger.debug "Node_#{id}, route finished"
                                 send :master, {:routeFinish, {from, to, hops + 1}}
-                            # TODO:- add routing table condition
-                            Enum.at(table_row, index) != -1 ->
-                                send :"Node_#{Enum.at(table_row, index)}", {:route, {type, from, to, hops + 1}}
-                            to > id ->
-                                send :"Node_#{Enum.max(larger_leafs)}", {:route, {type, from, to, hops + 1}}
-                                send :master, {:notInBoth, "not in both"}
-                            to < id ->
-                                send :"Node_#{Enum.min(smaller_leafs)}", {:route, {type, from, to, hops + 1}}
-                                send :master, {:notInBoth, "not in both"}
-                            true -> Logger.info "Node_#{id} Impossible!!! type: #{type} from: #{from} to: #{to}"
                             end
-                        end
+                    length(smaller_leafs) < 4 and length(smaller_leafs) > 0 and to < Enum.min(smaller_leafs) ->
+                        send :"Node_#{Enum.min(smaller_leafs)}", {:route, {from, to, hops + 1}}
+                    length(larger_leafs) < 4 and length(larger_leafs) > 0 and to > Enum.max(larger_leafs) ->
+                        send :"Node_#{Enum.max(larger_leafs)}", {:route, {from, to, hops + 1}}
+                    (length(smaller_leafs) == 0 and to < id) or (length(larger_leafs) == 0 and to > id) ->
+                        # current node is closest
+                        send :master, {:routeFinish, {from, to, hops + 1}}
+                    # TODO:- add routing table condition
+                    Enum.at(table_row, index) != -1 ->
+                        send :"Node_#{Enum.at(table_row, index)}", {:route, {from, to, hops + 1}}
+                    to > id ->
+                        send :"Node_#{Enum.max(larger_leafs)}", {:route, {from, to, hops + 1}}
+                        send :master, {:notInBoth, "not in both"}
+                    to < id ->
+                        send :"Node_#{Enum.min(smaller_leafs)}", {:route, {from, to, hops + 1}}
+                        send :master, {:notInBoth, "not in both"}
+                    true -> Logger.info "Node_#{id} Impossible!!! from: #{from} to: #{to}"
                     end
                 end
             {:addRow, {rowNum, newRow}} ->
-                # for i <- 0..3 do
-                #     table_row = Enum.at(table, rowNum)
-                #     element_at_index = Enum.at(table_row, i)
-                #     if element_at_index == -1 do
-                #         new_element = Enum.at(newRow, i)
-                #         updated_row = List.replace_at(table_row, i, new_element)
-                #         table = List.replace_at(table, i, updated_row)
-                #     end
-                # end
                 table = List.replace_at(table, rowNum, newRow)
             {:addLeaf, allLeaf} -> {larger_leafs, smaller_leafs, table} = add_buffer(allLeaf, larger_leafs, smaller_leafs, table, id, base)
                 update_sent = for i <- smaller_leafs do
@@ -289,10 +197,8 @@ defmodule PastryNode do
                     table_row = Enum.at(table, i)
                     index = toBase4String(id, base) |> String.at(i) |> Integer.parse |> elem(0)
                     List.replace_at(table_row, index, id)
-                    #table = List.replace_at(table, i, updated_row)
                 end
             {:update, {from, newNodeId}} -> {larger_leafs, smaller_leafs, table} = add_node(newNodeId, larger_leafs, smaller_leafs, table, id, base)
-                # TODO:- check if this has to be sent to master
                 send from, {:acknowledgement, "acknowledgement"}
             {:acknowledgement, value} -> numOfBack = numOfBack - 1
                 if numOfBack == 0 do
@@ -321,7 +227,7 @@ defmodule PastryNode do
             :timer.sleep 1000
             to = :rand.uniform(nodeIdSpace - 1 )
             Logger.debug "Node_#{id} sending request: from: #{id} to: #{to}"
-            send :"Node_#{id}", {:route, {:route, id, to, -1}}
+            send :"Node_#{id}", {:route, {id, to, -1}}
         end
     end
 end
