@@ -18,10 +18,10 @@ mix clean
 mix escript.build
 ```
  
-> Initialize and start gossip
+> Initialize and start pastry protocol
 
 ``` 
-./project3 <Number Of Nodes> <Number of Request>
+./project3 <Number Of Nodes> <Number of Request> 
 ```
 
 # What is working 
