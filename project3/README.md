@@ -11,6 +11,8 @@ Team 3
 # What is working 
 We have implemented the Pastry protocol as described in the paper as given in the project specifications. The route and the join mechanisms are also working.
 
+As of now our join algorithm is little slow O(n^2). So, it takes time join operation to finish when the number of nodes is more than 10000.
+
 # Largest network managed
 
 We tested for different combinations of number of nodes and number of requests. Below are some of the readings for the same:
