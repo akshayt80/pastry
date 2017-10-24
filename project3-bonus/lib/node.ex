@@ -1,12 +1,10 @@
 defmodule PastryNode do
     require Logger
-    # TODO:- check loops where in scala until 5 runs till 4 but in elixir it runs till 5
     def init(numNodes, numRequests, id, base, nodeIdSpace) do
-        # try using set
         Logger.debug "Initializing node: Node_#{id}"
-        larger_leafs = []#MapSet.new
-        smaller_leafs = []#Mapset.new
-        table = [] # %{}
+        larger_leafs = []
+        smaller_leafs = []
+        table = []
         numOfBack = 0
 
         table = for i <- 0..base-1 do
@@ -23,7 +21,6 @@ defmodule PastryNode do
         if diff > 0 do
             str = String.pad_leading(str, base, "0")
         end
-        #Logger.debug "raw: #{raw} base4: #{str}"
         str
     end
     def different_bit(nodeId1, nodeId2, base, bit, curr_pos) when (curr_pos == base) do
@@ -45,13 +42,11 @@ defmodule PastryNode do
         different_bit(nodeId1, nodeId2, base, bit, curr_pos)
     end
     # add nodes to leaf sets
-    # TODO:- return large_leaf set and small leaf set and table
     defp add_buffer(all, larger_leafs, smaller_leafs, table, id, base, current, size) when current >= size do
         {larger_leafs, smaller_leafs, table}
     end
     defp add_buffer(all, larger_leafs, smaller_leafs, table, id, base, current \\ -1, size \\ 0) do
         if size == 0 do
-            #Logger.debug "Node_#{id} size: #{length(all)}"
             size = length(all)
         end
         if current == -1 do
@@ -64,14 +59,11 @@ defmodule PastryNode do
 
         add_buffer(all, larger_leafs, smaller_leafs, table, id, base, current, size)
     end
-    # TODO:- return large_leaf set and small leaf set and table
     defp add_node(newNode, larger_leafs, smaller_leafs, table, id, base) do
         {larger_leafs, smaller_leafs} = update_leaf(newNode, id, larger_leafs, smaller_leafs)
-        # TODO:- thorough testing rquired of below logic
         samePrefix = different_bit(toBase4String(id, base), toBase4String(newNode, base), base)
         table_row = Enum.at(table, samePrefix)
         index = toBase4String(newNode, base) |> String.at(samePrefix) |> Integer.parse |> elem(0)
-        #element_at_index = elem(Integer.pasre(String.at(toBase4String(i, base), samePrefix)), 0)
         element_in_row = Enum.at(table_row, index)
         if element_in_row == -1 do
             updated_row = List.replace_at(table_row, index, newNode)
@@ -109,7 +101,6 @@ defmodule PastryNode do
     end
     defp update_leafs(newNodes, id, larger_leafs, smaller_leafs, current \\ -1, size \\ 0) do
         if size == 0 do
-            #Logger.debug "Node_#{id} size: #{length(all)}"
             size = length(newNodes)
         end
         if current == -1 do
@@ -122,13 +113,6 @@ defmodule PastryNode do
         {larger_leafs, smaller_leafs} = update_leaf(i, id, larger_leafs, smaller_leafs)
 
         update_leafs(newNodes, id, larger_leafs, smaller_leafs, current, size)
-    end
-    defp display(larger_leafs, smaller_leafs, table) do
-        Logger.info "smaller leafs: #{inspect(smaller_leafs)}"
-        Logger.info "larger_leafs: #{inspect(larger_leafs)}"
-        for {row, pos} <- Enum.with_index(table) do
-            Logger.info "row: #{pos} -> #{inspect(row)}"
-        end
     end
     defp listen(id, base, larger_leafs, smaller_leafs, table, numRequests, numNodes, nodeIdSpace, numOfBack) do
         receive do
@@ -145,7 +129,7 @@ defmodule PastryNode do
                 end
                 Logger.debug "Node_#{id} larger_leafs: #{inspect(larger_leafs)} smaller_leafs: #{inspect(smaller_leafs)} table: #{inspect(table)}"
                 send from, {:finishedJoining, "finished joining"}
-            {:route, {from, to, hops}} -> # TODO:- Finish the implementation
+            {:route, {from, to, hops}} ->
                 Logger.debug "Node_#{id} from: #{from} to: #{to} hops: #{hops}"
                 if id == to do
                     send :master, {:routeFinish, {from, to, hops + 1}}
@@ -179,7 +163,6 @@ defmodule PastryNode do
                     (length(smaller_leafs) == 0 and to < id) or (length(larger_leafs) == 0 and to > id) ->
                         # current node is closest
                         send :master, {:routeFinish, {from, to, hops + 1}}
-                    # TODO:- add routing table condition
                     Enum.at(table_row, index) != -1 ->
                         send :"Node_#{Enum.at(table_row, index)}", {:route, {from, to, hops + 1}}
                     to > id ->
@@ -191,49 +174,8 @@ defmodule PastryNode do
                     true -> Logger.info "Node_#{id} Impossible!!! from: #{from} to: #{to}"
                     end
                 end
-            {:addRow, {rowNum, newRow}} ->
-                table = List.replace_at(table, rowNum, newRow)
-            {:addLeaf, allLeaf} -> {larger_leafs, smaller_leafs, table} = add_buffer(allLeaf, larger_leafs, smaller_leafs, table, id, base)
-                update_sent = for i <- smaller_leafs do
-                    send :"Node_#{i}", {:update, {self(), id}}
-                    :ok
-                end
-                numOfBack = numOfBack + length(update_sent)
-                update_sent = for i <- larger_leafs do
-                    send :"Node_#{i}", {:update, {self(), id}}
-                    :ok
-                end
-                numOfBack = numOfBack + length(update_sent)
-                # for routing table
-                update_sent = for i <- 0..base-1  do
-                    table_row = table |> Enum.at(i)
-                    for j <- 0..3 do
-                        element = table_row |> Enum.at(j)
-                        if element != -1 do
-                            send :"Node_#{element}", {:update, {self(), id}}
-                            :ok
-                        end
-                    end
-                end
-                update_count = update_sent |> List.flatten |> Enum.count(fn(x) -> x != nil end)
-                numOfBack = numOfBack + update_count
-                table = for i <- 0..base-1 do
-                    table_row = Enum.at(table, i)
-                    index = toBase4String(id, base) |> String.at(i) |> Integer.parse |> elem(0)
-                    List.replace_at(table_row, index, id)
-                end
-            {:update, {from, newNodeId}} -> {larger_leafs, smaller_leafs, table} = add_node(newNodeId, larger_leafs, smaller_leafs, table, id, base)
-                send from, {:acknowledgement, "acknowledgement"}
-            {:acknowledgement, value} -> numOfBack = numOfBack - 1
-                if numOfBack == 0 do
-                    send :master, {:finishedJoining, "finished joining"}
-                end
-            {:displayLeafAndRouting, value} -> display(larger_leafs, smaller_leafs, table)
-                Logger.debug "Killing process: #{id}"
-                Process.exit(self(), :normal)
             {:terminate, registry} -> new_registry = registry -- [id]
                 for i <- new_registry do
-                    # TODO:- make it async
                     send :"#{i}", {:removeNode, id}
                 end
                 Process.sleep(1000)
@@ -255,13 +197,14 @@ defmodule PastryNode do
                             smaller_leafs = []
                         end
                     end
+
                     samePrefix = different_bit(toBase4String(id, base), toBase4String(nodeId, base), base)
                     table_row = Enum.at(table, samePrefix)
                     integer = toBase4String(nodeId, base) |> String.at(samePrefix)
                     Logger.debug "number to be parsed: #{integer}"
                     index = toBase4String(nodeId, base) |> String.at(samePrefix) |> Integer.parse |> elem(0)
-                    #element_at_index = elem(Integer.pasre(String.at(toBase4String(i, base), samePrefix)), 0)
                     element_in_row = Enum.at(table_row, index)
+
                     if element_in_row == nodeId do
                         updated_row = List.replace_at(table_row, index, -1)
                         table = List.replace_at(table, samePrefix, updated_row)
@@ -309,11 +252,10 @@ defmodule PastryNode do
     defp start_async_requests(numRequests, nodeIdSpace, id) do
         for i <- 0..numRequests-1 do
             # sending request every second to self
-            #:timer.sleep 1000
+            :timer.sleep 1000
             to = :rand.uniform(nodeIdSpace - 1 )
             Logger.debug "Node_#{id} sending request: from: #{id} to: #{to}"
-            #send :"Node_#{id}", {:route, {id, to, -1}}
-            Process.send_after(:"Node_#{id}", {:route, {id, to, -1}}, 1000)
+            send :"Node_#{id}", {:route, {id, to, -1}}
         end
     end
 end
