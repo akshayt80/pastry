@@ -8,6 +8,21 @@ Team 3
 1. Anmol Khanna, UFID:65140549, anmolkhanna93@ufl.edu,
 2. Akshay Singh Jetawat, UFID:22163183, akshayt80@ufl.edu,
 
+
+# Execution Steps
+
+> Compile
+
+```
+mix clean
+mix escript.build
+```
+ 
+> Initialize and start gossip
+
+``` 
+./project3 <Number Of Nodes> <Number of Request>
+
 # What is working 
 We have implemented the Pastry protocol as described in the paper as given in the project specifications. The route and the join mechanisms are also working.
 
