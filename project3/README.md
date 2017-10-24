@@ -26,20 +26,3 @@ We tested for different combinations of number of nodes and number of requests. 
 |1000  |100       |3.53   |
 |2000  |10        |3.86   |
 |10000 |20000     |4.74   |
- ## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `project3` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:project3, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/project3](https://hexdocs.pm/project3).
-
