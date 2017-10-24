@@ -43,10 +43,10 @@ defmodule PastryNode do
         different_bit(nodeId1, nodeId2, base, bit, curr_pos)
     end
     # add nodes to leaf sets
-    defp add_buffer(all, larger_leafs, smaller_leafs, table, id, base, current, size) when current >= size do
+    defp add_nodes(all, larger_leafs, smaller_leafs, table, id, base, current, size) when current >= size do
         {larger_leafs, smaller_leafs, table}
     end
-    defp add_buffer(all, larger_leafs, smaller_leafs, table, id, base, current \\ -1, size \\ 0) do
+    defp add_nodes(all, larger_leafs, smaller_leafs, table, id, base, current \\ -1, size \\ 0) do
         if size == 0 do
             size = length(all)
         end
@@ -58,7 +58,7 @@ defmodule PastryNode do
 
         {larger_leafs, smaller_leafs, table} = add_node(i, larger_leafs, smaller_leafs, table, id, base)
 
-        add_buffer(all, larger_leafs, smaller_leafs, table, id, base, current, size)
+        add_nodes(all, larger_leafs, smaller_leafs, table, id, base, current, size)
     end
     defp add_node(newNode, larger_leafs, smaller_leafs, table, id, base) do
         # node belongs to larger_leafs
@@ -101,7 +101,7 @@ defmodule PastryNode do
                 spawn fn -> start_async_requests(numRequests, nodeIdSpace, id) end
             {:initialJoin, {from, group}} -> groupOne = group -- [id]
                 Logger.debug "Node_#{id} groupOne: #{inspect(groupOne)}"
-                {larger_leafs, smaller_leafs, table} = add_buffer(groupOne, larger_leafs, smaller_leafs, table, id, base)
+                {larger_leafs, smaller_leafs, table} = add_nodes(groupOne, larger_leafs, smaller_leafs, table, id, base)
                 table = for i <- 0..base-1 do
                     table_row = Enum.at(table, i)
                     index = toBase4String(id, base) |> String.at(i) |> Integer.parse |> elem(0)
