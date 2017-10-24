@@ -11,8 +11,7 @@ Team 3
 
 # Execution Steps
 
-compile: mix clean
-         mix escript.build
+compile: mix clean, mix escript.build
 
 running: ./project3 numNodes numRequest
 
