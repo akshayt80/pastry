@@ -11,18 +11,10 @@ Team 3
 
 # Execution Steps
 
-> Compile
+compile: mix clean
+         mix escript.build
 
-```
-mix clean
-mix escript.build
-```
- 
-> Initialize and start pastry protocol
-
-``` 
-./project3 <Number Of Nodes> <Number of Request> 
-```
+running: ./project3 numNodes numRequest
 
 # What is working 
 We have implemented the Pastry protocol as described in the paper as given in the project specifications. The route and the join mechanisms are also working.
