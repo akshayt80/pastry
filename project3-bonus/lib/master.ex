@@ -58,15 +58,12 @@ defmodule Master do
         receive do
             {:finishedJoining, value} -> numJoined = numJoined + 1
                 if numJoined >= numNodes do
-                    #send self(), {:startRouting, "start routing"}
                     Logger.debug "sending failure"
                     send self(), {:startFailure, "start failure"}
                 end
             {:startRouting, value} -> Logger.info "Join is finished"
                 Logger.info "Now starting with routing"
                 for i <- numFailures..numNodes-1 do
-                    # right now this is async sending
-                    #spawn fn -> send :"#{i}", {:startRouting, "Start Routing"} end
                     Logger.debug "sending start route to : #{i}"
                     send :"#{Enum.at(registry, i)}", {:startRouting, "Start Routing"}
                 end
