@@ -58,8 +58,6 @@ defmodule Master do
             {:startRouting, value} -> Logger.info "Join is finished"
                 Logger.info "Now starting with routing"
                 for i <- registry do
-                    # right now this is async sending
-                    #spawn fn -> send :"#{i}", {:startRouting, "Start Routing"} end
                     Logger.debug "sending start route to : #{i}"
                     send :"#{i}", {:startRouting, "Start Routing"}
                 end
