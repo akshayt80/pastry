@@ -8,6 +8,13 @@ Team 3
 1. Anmol Khanna, UFID:65140549, anmolkhanna93@ufl.edu,
 2. Akshay Singh Jetawat, UFID:22163183, akshayt80@ufl.edu,
 
+
+# Execution Steps
+
+compile: mix clean, mix escript.build
+
+running: ./project3 numNodes numRequest
+
 # What is working 
 We have implemented the Pastry protocol as described in the paper as given in the project specifications. The route and the join mechanisms are also working.
 
@@ -27,4 +34,4 @@ We tested for different combinations of number of nodes and number of requests. 
 |1000	 |10  	     |3.51   |
 |1000  |100       |3.53   |
 |2000  |10        |3.86   |
-|10000 |20000     |4.74   |
+|10000 |2     |4.74   |
